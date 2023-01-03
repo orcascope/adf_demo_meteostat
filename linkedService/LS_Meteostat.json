@@ -1,0 +1,28 @@
+{
+	"name": "LS_Meteostat",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"description": "Linked Service for Meteostat API ",
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "http://rapidapi.com",
+			"enableServerCertificateValidation": false,
+			"authenticationType": "Anonymous",
+			"authHeaders": {
+				"X-Rapidapi-Key": {
+					"type": "SecureString",
+					"value": "**********"
+				},
+				"X-Rapidapi-Host": {
+					"type": "SecureString",
+					"value": "**********"
+				},
+				"Host": {
+					"type": "SecureString",
+					"value": "**********"
+				}
+			}
+		}
+	}
+}

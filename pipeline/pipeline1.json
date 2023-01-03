@@ -1,0 +1,351 @@
+{
+	"name": "pipeline1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set_Current_Timestamp_EST",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Var_Timestamp_Now",
+					"value": {
+						"value": "@convertFromUtc(utcNow(),'Eastern Standard Time', 'yyyy-MM-dd_HH:mm:ss')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set_Startdate",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Var_StartDate",
+					"value": {
+						"value": "@convertFromUtc(utcNow(),'Eastern Standard Time', 'yyyy-MM-dd')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set_Enddate",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Var_Enddate",
+					"value": {
+						"value": "@convertFromUtc(addDays(utcNow(),7),'Eastern Standard Time', 'yyyy-MM-dd')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "ForEach_Location",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set_Enddate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set_Current_Timestamp_EST",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set_Startdate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('Var_Location')",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Copy_Meteostat_Rest_ADLS_Hourly",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET"
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_Meteostat_Hourly_JSON",
+									"type": "DatasetReference",
+									"parameters": {
+										"Parm_Startdate": {
+											"value": "@variables('Var_StartDate')",
+											"type": "Expression"
+										},
+										"Parm_Enddate": {
+											"value": "@variables('Var_Enddate')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_Station_Hourly",
+									"type": "DatasetReference",
+									"parameters": {
+										"Parm_Location": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"Parm_Timestamp": {
+											"value": "@variables('Var_Timestamp_Now')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Copy_JSON_Landing_To_Parquet_Raw",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Copy_Meteostat_Rest_ADLS_Hourly",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"dataIntegrationUnits": 2,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "['time']"
+											},
+											"sink": {
+												"name": "time"
+											}
+										},
+										{
+											"source": {
+												"path": "['temp']"
+											},
+											"sink": {
+												"name": "temp"
+											}
+										},
+										{
+											"source": {
+												"path": "['dwpt']"
+											},
+											"sink": {
+												"name": "dwpt"
+											}
+										},
+										{
+											"source": {
+												"path": "['rhum']"
+											},
+											"sink": {
+												"name": "rhum"
+											}
+										},
+										{
+											"source": {
+												"path": "['prcp']"
+											},
+											"sink": {
+												"name": "prcp"
+											}
+										},
+										{
+											"source": {
+												"path": "['snow']"
+											},
+											"sink": {
+												"name": "snow"
+											}
+										},
+										{
+											"source": {
+												"path": "['wdir']"
+											},
+											"sink": {
+												"name": "wdir"
+											}
+										},
+										{
+											"source": {
+												"path": "['wspd']"
+											},
+											"sink": {
+												"name": "wspd"
+											}
+										},
+										{
+											"source": {
+												"path": "['wpgt']"
+											},
+											"sink": {
+												"name": "wpgt"
+											}
+										},
+										{
+											"source": {
+												"path": "['pres']"
+											},
+											"sink": {
+												"name": "pres"
+											}
+										},
+										{
+											"source": {
+												"path": "['tsun']"
+											},
+											"sink": {
+												"name": "tsun"
+											}
+										},
+										{
+											"source": {
+												"path": "['coco']"
+											},
+											"sink": {
+												"name": "coco"
+											}
+										},
+										{
+											"source": {
+												"path": "$['meta']['generated']"
+											},
+											"sink": {
+												"name": "generated_time"
+											}
+										}
+									],
+									"collectionReference": "$['data']"
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_Station_Hourly",
+									"type": "DatasetReference",
+									"parameters": {
+										"Parm_Location": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"Parm_Timestamp": {
+											"value": "@variables('Var_Timestamp_Now')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_StationHourly_Raw",
+									"type": "DatasetReference",
+									"parameters": {
+										"Parm_Location": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"Parm_Timestamp": {
+											"value": "@variables('Var_Timestamp_Now')",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"Var_Timestamp_Now": {
+				"type": "String"
+			},
+			"Var_StartDate": {
+				"type": "String"
+			},
+			"Var_Enddate": {
+				"type": "String"
+			},
+			"Var_Location": {
+				"type": "Array",
+				"defaultValue": [
+					"72517",
+					"KXLL0",
+					"KUKT0"
+				]
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-01-02T20:55:13Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

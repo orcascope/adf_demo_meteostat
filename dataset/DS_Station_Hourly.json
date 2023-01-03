@@ -1,0 +1,35 @@
+{
+	"name": "DS_Station_Hourly",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Parm_Location": {
+				"type": "string"
+			},
+			"Parm_Timestamp": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@concat('ppl_hourly_' ,dataset().Parm_Timestamp)",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().Parm_Location",
+					"type": "Expression"
+				},
+				"container": "stationhourly"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,36 @@
+{
+	"name": "DS_StationHourly_Raw",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_ADLS",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Parm_Location": {
+				"type": "string"
+			},
+			"Parm_Timestamp": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@concat('ppl_hourly_' ,dataset().Parm_Timestamp,'.parquet')",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().Parm_Location",
+					"type": "Expression"
+				},
+				"container": "raw"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

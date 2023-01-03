@@ -1,0 +1,27 @@
+{
+	"name": "DS_Meteostat_Hourly_JSON",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_Meteostat",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Parm_Startdate": {
+				"type": "string"
+			},
+			"Parm_Enddate": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@concat('/stations/hourly?station=10637&start=', dataset().Parm_Startdate,'&end=', dataset().Parm_Enddate)",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
